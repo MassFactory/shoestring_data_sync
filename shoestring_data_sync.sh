@@ -88,7 +88,7 @@ show_progress() {
     printf "\r[✔] 完了                                \n"
 }
 
-# (★変更★) 操作対象のディレクトリを自動設定し、検証する関数
+# 操作対象のディレクトリを自動設定し、検証する関数
 initialize_and_validate_paths() {
     log_step "操作対象ディレクトリの確認"
     # スクリプトが置かれているディレクトリの、さらに親のディレクトリを取得
@@ -180,17 +180,26 @@ reset_shoestring_data() {
     "${PYTHON_CMD}" -m shoestring reset-data --config "${TARGET_DIR}/shoestring.ini" --directory "${TARGET_DIR}"
 }
 
-# ダウンロード用のディレクトリを準備する関数
+# (★変更★) ダウンロード用のディレクトリを準備する関数
 prepare_backup_dir() {
     log_step "ダウンロード用ディレクトリの準備"
-    if [ -d "${BACKUP_DIR}" ]; then
-        log_info "${BACKUP_DIR}フォルダが存在するため、中身を一旦すべて削除します。"
-        rm -rf "${BACKUP_DIR:?}"/*
-    else
+    # back_data ディレクトリがなければ作成
+    if [ ! -d "${BACKUP_DIR}" ]; then
         log_info "${BACKUP_DIR}フォルダが存在しないため、新規に作成します。"
         mkdir "${BACKUP_DIR}"
     fi
-    log_info "ディレクトリの準備が完了しました: ${BACKUP_DIR}"
+
+    # 展開済みの古いディレクトリがあれば削除し、ダウンロードファイル(.tar.gz)は保持する
+    if [ -d "${BACKUP_DIR}/databases" ]; then
+        log_info "展開済みの古い'databases'ディレクトリを削除します..."
+        rm -rf "${BACKUP_DIR}/databases"
+    fi
+    if [ -d "${BACKUP_DIR}/data" ]; then
+        log_info "展開済みの古い'data'ディレクトリを削除します..."
+        rm -rf "${BACKUP_DIR}/data"
+    fi
+
+    log_info "ディレクトリの準備が完了しました。(${BACKUP_DIR})"
 }
 
 # 最新のブロックチェーンデータをダウンロードし、展開する関数
@@ -204,11 +213,13 @@ download_and_extract_data() {
     local data_filename="mainnet.data.tar.gz"
 
     log_info "[1/4] データベースをダウンロードしています... (ファイルサイズ: 約2GB)"
-    (wget -q -P "./${BACKUP_DIR}" "${DATABASES_URL}") &
+    # -c オプションを追加してダウンロードの再開を可能にする
+    (wget -c -q -P "./${BACKUP_DIR}" "${DATABASES_URL}") &
     show_progress $! "./${BACKUP_DIR}/${db_filename}"
 
     log_info "[2/4] ブロックデータをダウンロードしています... (ファイルサイズ: 約70GB)"
-    (wget -q -P "./${BACKUP_DIR}" "${DATA_URL}") &
+    # -c オプションを追加してダウンロードの再開を可能にする
+    (wget -c -q -P "./${BACKUP_DIR}" "${DATA_URL}") &
     show_progress $! "./${BACKUP_DIR}/${data_filename}"
 
     log_info "[3/4] データベースを展開しています... (この処理はすぐに完了します)"
@@ -289,5 +300,4 @@ main() {
 
 # スクリプトの実行開始
 main
-
 
