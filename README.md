@@ -42,8 +42,13 @@ Automates re-syncing a Symbol (XYM) node by applying the latest blockchain snaps
 
 ## 使い方 (Usage)
 
-1.  **スクリプトの配置**:
-    この `README.md` と `shoestring_data_sync.sh` (スクリプトファイル) を、`symbol-shoestring`をセットアップしたディレクトリ（`docker-compose.yaml`などがある場所）に置きます。
+1.  **リポジトリのクローン**:
+    まず、`git`コマンドを使ってリポジトリをダウンロードし、そのディレクトリに移動します。
+    ```sh
+    git clone [https://github.com/MassFactory/shoestring_data_sync.git](https://github.com/MassFactory/shoestring_data_sync.git)
+    cd shoestring_data_sync
+    ```
+    (この時点で、`shoestring_data_sync.sh`と`README.md`がカレントディレクトリに配置されます。)
 
 2.  **実行権限の付与**:
     スクリプトに実行権限を与えます。
