@@ -2,10 +2,10 @@
 
 #================================================================================
 #
-# Symbol (XYM) ノード (symbol-shoestring) データ最新化スクリプト
+# Symbol-shoestring ノード データ自動同期スクリプト
 #
 # [概要]
-# このスクリプトは、symbol-shoestringで構築したSymbolノードのブロックチェーンデータを
+# このスクリプトは、symbol-shoestringで構築したSymbol (XYM) ノードのブロックチェーンデータを
 # アーカイブサイトからダウンロードした最新のデータに置き換えます。
 #
 # [前提条件]
@@ -17,7 +17,6 @@
 # 3. `pigz`がインストールされていること (tarの並列解凍に使用します)。
 #    (例: sudo apt-get install pigz)
 # 4. `wget`, `docker` コマンドが利用可能であること。
-#  ※ コマンドは実行時チェックされます。
 #
 # [注意事項]
 # - 現在のブロックチェーンデータはすべて削除され、ダウンロードしたデータに置き換えられます。
@@ -67,13 +66,30 @@ log_step() {
     echo "======================================================================"
 }
 
+# (★ここに追加★) 処理中にスピナーを表示するヘルパー関数
+# 引数: バックグラウンドで実行されているプロセスのPID
+show_spinner() {
+    local pid=$1
+    local spin='|/-\'
+    local i=0
+    # プロセスが終了するまでループ
+    while kill -0 "$pid" 2>/dev/null; do
+        i=$(( (i+1) %4 ))
+        # スピナーをアニメーション表示
+        printf "\r[%c] 処理中..." "${spin:$i:1}"
+        sleep 0.1
+    done
+    # 完了メッセージを表示
+    printf "\r[✔] 完了        \n"
+}
+
+
 # 必須コマンドの存在をチェックする関数
 check_dependencies() {
     log_info "必須コマンドの存在をチェックします..."
     local dependencies=("docker" "wget" "pigz" "${PYTHON_CMD}")
     local missing_deps=0
     for cmd in "${dependencies[@]}"; do
-        # venv内のpythonのようにパスが含まれる場合と、そうでない場合を両方チェック
         if ! command -v "${cmd}" &> /dev/null; then
             echo "ERROR: 必須コマンドが見つかりません: ${cmd}"
             missing_deps=$((missing_deps + 1))
@@ -91,7 +107,6 @@ check_dependencies() {
 confirm_execution() {
     log_step "実行確認"
     read -p "最新のブロックチェーンデータを投入します。現在のデータは削除されます。よろしいですか? (y/N): " yn
-    # 'y'または'Y'で始まらない入力はすべて 'No' とみなす
     if [[ ! "$yn" =~ ^[yY] ]]; then
         echo "処理を中止しました。"
         exit 0
@@ -136,7 +151,7 @@ prepare_backup_dir() {
     log_step "ダウンロード用ディレクトリの準備"
     if [ -d "${BACKUP_DIR}" ]; then
         log_info "${BACKUP_DIR}フォルダが存在するため、中身を一旦すべて削除します。"
-        rm -rf "${BACKUP_DIR:?}"/* # 安全のため :? をつけて変数が空でないことを保証
+        rm -rf "${BACKUP_DIR:?}"/*
     else
         log_info "${BACKUP_DIR}フォルダが存在しないため、新規に作成します。"
         mkdir "${BACKUP_DIR}"
@@ -144,7 +159,8 @@ prepare_backup_dir() {
     log_info "ディレクトリの準備が完了しました: ${BACKUP_DIR}"
 }
 
-# 最新のブロックチェーンデータをダウンロードし、並列で展開する関数
+
+# (★ここを置き換え★) 最新のブロックチェーンデータをダウンロードし、展開する関数
 download_and_extract_data() {
     log_step "最新ブロックチェーンデータのダウンロードと展開"
     log_info "データの提供元: オープニングライン様 https://symbol-archive.opening-line.jp/"
@@ -153,32 +169,29 @@ download_and_extract_data() {
 
     # --- ステップ1: データベースのダウンロード ---
     log_info "[1/4] データベースをダウンロードしています... (ファイルサイズ: 約2GB)"
-    # wgetの -q で通常ログを抑制し、--show-progress でプログレスバーを表示します
-    wget -q --show-progress -P "./${BACKUP_DIR}" "${DATABASES_URL}"
-    log_info " -> データベースのダウンロードが完了しました。"
-    echo ""
+    # wgetの出力を完全に抑制(-q)し、バックグラウンド(&)で実行
+    (wget -q -P "./${BACKUP_DIR}" "${DATABASES_URL}") &
+    show_spinner $! # バックグラウンドジョブのPIDをspinnerに渡す
 
     # --- ステップ2: ブロックデータのダウンロード ---
     log_info "[2/4] ブロックデータをダウンロードしています... (ファイルサイズ: 約70GB)"
-    wget -q --show-progress -P "./${BACKUP_DIR}" "${DATA_URL}"
-    log_info " -> ブロックデータのダウンロードが完了しました。"
-    echo ""
+    (wget -q -P "./${BACKUP_DIR}" "${DATA_URL}") &
+    show_spinner $!
 
     # --- ステップ3: データベースの展開 ---
     log_info "[3/4] データベースを展開しています... (この処理はすぐに完了します)"
-    # tarの -v オプションを外し、ファイル一覧の表示を抑制します
-    tar xf "./${BACKUP_DIR}/mainnet.databases.tar.gz" -C "./${BACKUP_DIR}/" -I pigz
-    log_info " -> データベースの展開が完了しました。"
-    echo ""
+    # tarの出力を抑制し、バックグラウンドで実行
+    (tar xf "./${BACKUP_DIR}/mainnet.databases.tar.gz" -C "./${BACKUP_DIR}/" -I pigz) &
+    show_spinner $!
 
     # --- ステップ4: ブロックデータの展開 ---
     log_info "[4/4] ブロックデータを展開しています... (この処理が最も時間がかかります)"
-    tar xf "./${BACKUP_DIR}/mainnet.data.tar.gz" -C "./${BACKUP_DIR}/" -I pigz
-    log_info " -> ブロックデータの展開が完了しました。"
-    echo ""
+    (tar xf "./${BACKUP_DIR}/mainnet.data.tar.gz" -C "./${BACKUP_DIR}/" -I pigz) &
+    show_spinner $!
 
     log_info "データのダウンロードと展開がすべて完了しました。"
 }
+
 
 # 展開したデータを適切な場所に移動する関数
 move_data_to_node() {
@@ -217,6 +230,7 @@ health_check() {
     "${PYTHON_CMD}" -m shoestring health --config ./shoestring.ini --directory .
 }
 
+
 # --- メイン処理 ---
 main() {
     check_dependencies
@@ -241,3 +255,5 @@ main() {
 
 # スクリプトの実行開始
 main
+
+
