@@ -32,7 +32,7 @@ Automates re-syncing a Symbol (XYM) node by applying the latest blockchain snaps
     -   `pigz` (tarの並列解凍に使用)
         -   Debian/Ubuntu系: `sudo apt-get install pigz`
 2.  **必要なファイル**:
-    -   スクリプトを実行するディレクトリに、`symbol-shoestring`セットアップ時に生成された以下のファイルが存在すること。
+    -   ノードインストールディレクトリ直下に、以下のファイルが存在すること。
         -   `shoestring.ini`
         -   `overrides.ini`
         -   `docker-compose.yaml`
