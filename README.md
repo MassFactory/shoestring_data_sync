@@ -53,7 +53,7 @@ Automates re-syncing a Symbol (XYM) node by applying the latest blockchain snaps
 2.  **リポジトリをクローン**
     現在のディレクトリ（ノードのルート）に、このスクリプトのリポジトリをダウンロードします。
     ```sh
-    git clone [https://github.com/MassFactory/shoestring_data_sync.git](https://github.com/MassFactory/shoestring_data_sync.git)
+    git clone https://github.com/MassFactory/shoestring_data_sync.git
     ```
     これにより、`shoestring_data_sync`という名前の新しいフォルダが作成されます。
 
