@@ -5,7 +5,7 @@ Automates re-syncing a Symbol (XYM) node by applying the latest blockchain snaps
 
 ## 概要 (Overview)
 
-このスクリプトは、`symbol-shoestring`で構築したSymbol (XYM) ノードのブロックチェーンデータを、最新のスナップショットから自動でダウンロードし、置き換えるためのものです。手動での煩雑な作業をなくし、迅速なデータ同期を実現します。
+このスクリプトは、`symbol-shoestring`で構築したSymbol (XYM) ノードのブロックチェーンデータを、最新のスナップショットから自動でダウンロードし、同期チェーンデータをノードに置き換えるためのものです。手動での煩雑な作業をなくし、迅速なデータ同期を実現します。
 
 実行時の全プロセスは、タイムスタンプ付きのログファイルとして自動的に保存されます。
 
