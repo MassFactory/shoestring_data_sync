@@ -148,15 +148,36 @@ prepare_backup_dir() {
 download_and_extract_data() {
     log_step "最新ブロックチェーンデータのダウンロードと展開"
     log_info "データの提供元: オープニングライン様 https://symbol-archive.opening-line.jp/"
-    log_info "データベースとブロックデータのダウンロードと展開を並列で開始します。これには時間がかかります..."
+    log_info "4つのステップで処理を実行します。これには時間がかかります..."
+    echo "" # 読みやすくするために改行
 
-    # wgetとtarをバックグラウンドで並列実行
-    wget -P "./${BACKUP_DIR}" "${DATABASES_URL}" && tar xvf "./${BACKUP_DIR}/mainnet.databases.tar.gz" -C "./${BACKUP_DIR}/" -I pigz &
-    wget -P "./${BACKUP_DIR}" "${DATA_URL}" && tar xvf "./${BACKUP_DIR}/mainnet.data.tar.gz" -C "./${BACKUP_DIR}/" -I pigz &
+    # --- ステップ1: データベースのダウンロード ---
+    log_info "[1/4] データベースをダウンロードしています... (ファイルサイズ: 約2GB)"
+    # wgetの -q で通常ログを抑制し、--show-progress でプログレスバーを表示します
+    wget -q --show-progress -P "./${BACKUP_DIR}" "${DATABASES_URL}"
+    log_info " -> データベースのダウンロードが完了しました。"
+    echo ""
 
-    # バックグラウンドで実行したすべてのジョブの終了を待つ
-    wait
-    log_info "データのダウンロードと展開が完了しました。"
+    # --- ステップ2: ブロックデータのダウンロード ---
+    log_info "[2/4] ブロックデータをダウンロードしています... (ファイルサイズ: 約70GB)"
+    wget -q --show-progress -P "./${BACKUP_DIR}" "${DATA_URL}"
+    log_info " -> ブロックデータのダウンロードが完了しました。"
+    echo ""
+
+    # --- ステップ3: データベースの展開 ---
+    log_info "[3/4] データベースを展開しています... (この処理はすぐに完了します)"
+    # tarの -v オプションを外し、ファイル一覧の表示を抑制します
+    tar xf "./${BACKUP_DIR}/mainnet.databases.tar.gz" -C "./${BACKUP_DIR}/" -I pigz
+    log_info " -> データベースの展開が完了しました。"
+    echo ""
+
+    # --- ステップ4: ブロックデータの展開 ---
+    log_info "[4/4] ブロックデータを展開しています... (この処理が最も時間がかかります)"
+    tar xf "./${BACKUP_DIR}/mainnet.data.tar.gz" -C "./${BACKUP_DIR}/" -I pigz
+    log_info " -> ブロックデータの展開が完了しました。"
+    echo ""
+
+    log_info "データのダウンロードと展開がすべて完了しました。"
 }
 
 # 展開したデータを適切な場所に移動する関数
