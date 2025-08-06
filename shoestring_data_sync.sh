@@ -222,7 +222,7 @@ download_and_extract_data() {
     (wget -c -q -P "./${BACKUP_DIR}" "${DATA_URL}") &
     show_progress $! "${data_filepath}"
 
-    log_info "[3/4] データベースを展開しています... (この処理はすぐに完了します)"
+    log_info "[3/4] データベースを展開しています... (この処理は時間が掛かります)"
     # (★変更★) pvの進捗表示(stderr)を直接ターミナル(/dev/tty)に出力し、ログリダイレクトを回避します
     pv "${db_filepath}" 2>/dev/tty | pigz -dc | tar xf - -C "./${BACKUP_DIR}/"
     log_info " -> データベースの展開が完了しました。"
@@ -268,8 +268,8 @@ start_node() {
 # ノードのヘルスチェックを行う関数
 health_check() {
     log_step "ヘルスチェック"
-    log_info "ノードの起動を安定させるため60秒待機します..."
-    sleep 60
+    log_info "ノードの起動を安定させるため3分間待機します..."
+    sleep 180
     log_info "ヘルスチェックを実行します..."
     "${PYTHON_CMD}" -m shoestring health --config "${TARGET_DIR}/shoestring.ini" --directory "${TARGET_DIR}"
 }
