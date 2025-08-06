@@ -119,7 +119,6 @@ initialize_and_validate_paths() {
 # 必須コマンドの存在をチェックする関数
 check_dependencies() {
     log_info "必須コマンドの存在をチェックします..."
-    # (★変更★) pvを追加
     local dependencies=("docker" "wget" "pigz" "git" "pv")
     local missing_deps=0
     for cmd in "${dependencies[@]}"; do
@@ -203,7 +202,7 @@ prepare_backup_dir() {
     log_info "ディレクトリの準備が完了しました。(${BACKUP_DIR})"
 }
 
-# (★変更★) 最新のブロックチェーンデータをダウンロードし、展開する関数
+# 最新のブロックチェーンデータをダウンロードし、展開する関数
 download_and_extract_data() {
     log_step "最新ブロックチェーンデータのダウンロードと展開"
     log_info "データの提供元: オープニングライン様 https://symbol-archive.opening-line.jp/"
@@ -215,22 +214,23 @@ download_and_extract_data() {
     local db_filepath="./${BACKUP_DIR}/${db_filename}"
     local data_filepath="./${BACKUP_DIR}/${data_filename}"
 
-    log_info "[1/4] データベースをダウンロードしています... (ファイルサイズ: 約10GB)"
+    log_info "[1/4] データベースをダウンロードしています... (ファイルサイズ: 約2GB)"
     (wget -c -q -P "./${BACKUP_DIR}" "${DATABASES_URL}") &
     show_progress $! "${db_filepath}"
 
-    log_info "[2/4] ブロックデータをダウンロードしています... (ファイルサイズ: 約80GB)"
+    log_info "[2/4] ブロックデータをダウンロードしています... (ファイルサイズ: 約70GB)"
     (wget -c -q -P "./${BACKUP_DIR}" "${DATA_URL}") &
     show_progress $! "${data_filepath}"
 
     log_info "[3/4] データベースを展開しています... (この処理はすぐに完了します)"
-    # pvで進捗を表示し、pigzで並列解凍、tarで展開
-    pv "${db_filepath}" | pigz -dc | tar xf - -C "./${BACKUP_DIR}/"
+    # (★変更★) pvの進捗表示(stderr)を直接ターミナル(/dev/tty)に出力し、ログリダイレクトを回避します
+    pv "${db_filepath}" 2>/dev/tty | pigz -dc | tar xf - -C "./${BACKUP_DIR}/"
     log_info " -> データベースの展開が完了しました。"
     echo ""
 
     log_info "[4/4] ブロックデータを展開しています... (この処理が最も時間がかかります)"
-    pv "${data_filepath}" | pigz -dc | tar xf - -C "./${BACKUP_DIR}/"
+    # (★変更★) pvの進捗表示(stderr)を直接ターミナル(/dev/tty)に出力し、ログリダイレクトを回避します
+    pv "${data_filepath}" 2>/dev/tty | pigz -dc | tar xf - -C "./${BACKUP_DIR}/"
     log_info " -> ブロックデータの展開が完了しました。"
     echo ""
 
