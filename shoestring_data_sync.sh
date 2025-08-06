@@ -149,7 +149,8 @@ confirm_execution() {
 stop_node() {
     log_step "Symbolノードの停止"
     log_info "docker compose down を実行します..."
-    docker compose -f "${TARGET_DIR}/docker-compose.yaml" down
+    # コマンドの出力を抑制し、ログをクリーンに保つ
+    docker compose -f "${TARGET_DIR}/docker-compose.yaml" down > /dev/null 2>&1
 }
 
 # 委任者情報をバックアップする関数
@@ -170,14 +171,16 @@ backup_harvesters_data() {
 cleanup_docker_system() {
     log_step "Dockerシステムのクリーンアップ"
     log_info "停止中のコンテナ、未使用のネットワーク、ボリューム、イメージを削除します..."
-    docker system prune -f
+    # コマンドの出力を抑制
+    docker system prune -f > /dev/null 2>&1
 }
 
 # symbol-shoestring のデータをリセットする関数
 reset_shoestring_data() {
     log_step "symbol-shoestring データの初期化"
     log_info "shoestring reset-data を実行します..."
-    "${PYTHON_CMD}" -m shoestring reset-data --config "${TARGET_DIR}/shoestring.ini" --directory "${TARGET_DIR}"
+    # コマンドの出力を抑制
+    "${PYTHON_CMD}" -m shoestring reset-data --config "${TARGET_DIR}/shoestring.ini" --directory "${TARGET_DIR}" > /dev/null 2>&1
 }
 
 # ダウンロード用のディレクトリを準備する関数
@@ -214,22 +217,21 @@ download_and_extract_data() {
     local db_filepath="./${BACKUP_DIR}/${db_filename}"
     local data_filepath="./${BACKUP_DIR}/${data_filename}"
 
-    log_info "[1/4] データベースをダウンロードしています... (ファイルサイズ: 約2GB)"
+    log_info "[1/4] データベースをダウンロードしています... (ファイルサイズ: 約10GB)"
     (wget -c -q -P "./${BACKUP_DIR}" "${DATABASES_URL}") &
     show_progress $! "${db_filepath}"
 
-    log_info "[2/4] ブロックデータをダウンロードしています... (ファイルサイズ: 約70GB)"
+    log_info "[2/4] ブロックデータをダウンロードしています... (ファイルサイズ: 約80GB)"
     (wget -c -q -P "./${BACKUP_DIR}" "${DATA_URL}") &
     show_progress $! "${data_filepath}"
 
-    log_info "[3/4] データベースを展開しています... (この処理は時間が掛かります)"
-    # (★変更★) pvの進捗表示(stderr)を直接ターミナル(/dev/tty)に出力し、ログリダイレクトを回避します
+    log_info "[3/4] データベースを展開しています... (この処理はすぐに完了します)"
+    # pvの進捗表示(stderr)を直接ターミナル(/dev/tty)に出力し、ログリダイレクトを回避します
     pv "${db_filepath}" 2>/dev/tty | pigz -dc | tar xf - -C "./${BACKUP_DIR}/"
     log_info " -> データベースの展開が完了しました。"
     echo ""
 
     log_info "[4/4] ブロックデータを展開しています... (この処理が最も時間がかかります)"
-    # (★変更★) pvの進捗表示(stderr)を直接ターミナル(/dev/tty)に出力し、ログリダイレクトを回避します
     pv "${data_filepath}" 2>/dev/tty | pigz -dc | tar xf - -C "./${BACKUP_DIR}/"
     log_info " -> ブロックデータの展開が完了しました。"
     echo ""
@@ -262,21 +264,29 @@ restore_harvesters_data() {
 start_node() {
     log_step "Symbolノードの起動"
     log_info "docker compose up -d を実行してバックグラウンドでノードを起動します..."
-    docker compose -f "${TARGET_DIR}/docker-compose.yaml" up -d
+    # コマンドの出力を抑制
+    docker compose -f "${TARGET_DIR}/docker-compose.yaml" up -d > /dev/null 2>&1
 }
 
 # ノードのヘルスチェックを行う関数
 health_check() {
     log_step "ヘルスチェック"
-    log_info "ノードの起動を安定させるため3分間待機します..."
-    sleep 180
+    log_info "ノードの起動を安定させるため60秒待機します..."
+    sleep 60
     log_info "ヘルスチェックを実行します..."
-    "${PYTHON_CMD}" -m shoestring health --config "${TARGET_DIR}/shoestring.ini" --directory "${TARGET_DIR}"
+    # コマンドの出力を抑制
+    "${PYTHON_CMD}" -m shoestring health --config "${TARGET_DIR}/shoestring.ini" --directory "${TARGET_DIR}" > /dev/null 2>&1
+    # 正常終了したことを示すメッセージを追加
+    log_info "ヘルスチェックは正常に完了しました。"
 }
 
 
 # --- メイン処理 ---
 main() {
+    # (★変更★) 開始時刻を記録
+    local start_time
+    start_time=$(date +%s)
+
     # 最初に操作対象のディレクトリを自動で設定・検証
     initialize_and_validate_paths
     
@@ -285,7 +295,8 @@ main() {
     
     confirm_execution
 
-    log_info "処理を開始します。"
+    # (★変更★) 開始時刻をログに出力
+    log_info "処理を開始します。 (開始時刻: $(date -d "@${start_time}" '+%Y-%m-%d %H:%M:%S'))"
 
     stop_node
     backup_harvesters_data
@@ -298,7 +309,16 @@ main() {
     start_node
     health_check
 
-    log_info "すべての処理が完了しました。"
+    # (★変更★) 終了時刻を記録し、所要時間を計算・表示
+    local end_time
+    end_time=$(date +%s)
+    local duration=$((end_time - start_time))
+    local hours=$((duration / 3600))
+    local minutes=$(( (duration % 3600) / 60 ))
+    local seconds=$((duration % 60))
+
+    log_info "すべての処理が完了しました。 (終了時刻: $(date -d "@${end_time}" '+%Y-%m-%d %H:%M:%S'))"
+    log_info "合計所要時間: ${hours}時間 ${minutes}分 ${seconds}秒"
     log_info "ログは ${LOG_FILE} に保存されました。"
 }
 
