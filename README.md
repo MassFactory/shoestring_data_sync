@@ -89,7 +89,8 @@ Automates re-syncing a Symbol (XYM) node by applying the latest blockchain snaps
 -   `git`
 -   `docker` 及び `docker-compose`
 -   `wget`
--   `pigz`
+-   **`pigz`** (マルチスレッドで動作するgzip解凍並列処理化用)
+    -   Debian/Ubuntu系: `sudo apt-get install pigz`
 -   **`pv`** (プログレスバー表示用)
     -   Debian/Ubuntu系: `sudo apt-get install pv`
 
