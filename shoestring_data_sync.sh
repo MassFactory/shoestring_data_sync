@@ -119,7 +119,8 @@ initialize_and_validate_paths() {
 # 必須コマンドの存在をチェックする関数
 check_dependencies() {
     log_info "必須コマンドの存在をチェックします..."
-    local dependencies=("docker" "wget" "pigz" "git")
+    # (★変更★) pvを追加
+    local dependencies=("docker" "wget" "pigz" "git" "pv")
     local missing_deps=0
     for cmd in "${dependencies[@]}"; do
         if ! command -v "${cmd}" &> /dev/null; then
@@ -180,7 +181,7 @@ reset_shoestring_data() {
     "${PYTHON_CMD}" -m shoestring reset-data --config "${TARGET_DIR}/shoestring.ini" --directory "${TARGET_DIR}"
 }
 
-# (★変更★) ダウンロード用のディレクトリを準備する関数
+# ダウンロード用のディレクトリを準備する関数
 prepare_backup_dir() {
     log_step "ダウンロード用ディレクトリの準備"
     # back_data ディレクトリがなければ作成
@@ -202,7 +203,7 @@ prepare_backup_dir() {
     log_info "ディレクトリの準備が完了しました。(${BACKUP_DIR})"
 }
 
-# 最新のブロックチェーンデータをダウンロードし、展開する関数
+# (★変更★) 最新のブロックチェーンデータをダウンロードし、展開する関数
 download_and_extract_data() {
     log_step "最新ブロックチェーンデータのダウンロードと展開"
     log_info "データの提供元: オープニングライン様 https://symbol-archive.opening-line.jp/"
@@ -211,24 +212,27 @@ download_and_extract_data() {
 
     local db_filename="mainnet.databases.tar.gz"
     local data_filename="mainnet.data.tar.gz"
+    local db_filepath="./${BACKUP_DIR}/${db_filename}"
+    local data_filepath="./${BACKUP_DIR}/${data_filename}"
 
-    log_info "[1/4] データベースをダウンロードしています... (ファイルサイズ: 約2GB)"
-    # -c オプションを追加してダウンロードの再開を可能にする
+    log_info "[1/4] データベースをダウンロードしています... (ファイルサイズ: 約10GB)"
     (wget -c -q -P "./${BACKUP_DIR}" "${DATABASES_URL}") &
-    show_progress $! "./${BACKUP_DIR}/${db_filename}"
+    show_progress $! "${db_filepath}"
 
-    log_info "[2/4] ブロックデータをダウンロードしています... (ファイルサイズ: 約70GB)"
-    # -c オプションを追加してダウンロードの再開を可能にする
+    log_info "[2/4] ブロックデータをダウンロードしています... (ファイルサイズ: 約80GB)"
     (wget -c -q -P "./${BACKUP_DIR}" "${DATA_URL}") &
-    show_progress $! "./${BACKUP_DIR}/${data_filename}"
+    show_progress $! "${data_filepath}"
 
     log_info "[3/4] データベースを展開しています... (この処理はすぐに完了します)"
-    (tar xf "./${BACKUP_DIR}/${db_filename}" -C "./${BACKUP_DIR}/" -I pigz) &
-    show_progress $!
+    # pvで進捗を表示し、pigzで並列解凍、tarで展開
+    pv "${db_filepath}" | pigz -dc | tar xf - -C "./${BACKUP_DIR}/"
+    log_info " -> データベースの展開が完了しました。"
+    echo ""
 
     log_info "[4/4] ブロックデータを展開しています... (この処理が最も時間がかかります)"
-    (tar xf "./${BACKUP_DIR}/${data_filename}" -C "./${BACKUP_DIR}/" -I pigz) &
-    show_progress $!
+    pv "${data_filepath}" | pigz -dc | tar xf - -C "./${BACKUP_DIR}/"
+    log_info " -> ブロックデータの展開が完了しました。"
+    echo ""
 
     log_info "データのダウンロードと展開がすべて完了しました。"
 }
