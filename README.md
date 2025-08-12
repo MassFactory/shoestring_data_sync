@@ -23,11 +23,23 @@ Automates re-syncing a Symbol (XYM) node by applying the latest blockchain snaps
 
 ---
 
+## 前提条件 (Prerequisites)
+
+-   Symbol-shoestring インストールディレクトリにて実行すること。
+-   インストールディレクトリには、 `docker-compose.yaml`  `shoestring.ini` が存在すること。  
+-   `git`  `docker`  `docker-compose`  `wget` がインストール済み。
+-   **`pigz`** (マルチスレッドで動作するgzip解凍並列処理化用)
+    -   Debian/Ubuntu系: `sudo apt-get install pigz`
+-   **`pv`** (プログレスバー表示用)
+    -   Debian/Ubuntu系: `sudo apt-get install pv`
+
+---
+
 ## 使い方 (Usage)
 
 ### 初回セットアップ手順
 
-1.  **ノードのディレクトリに移動**
+1.  **ノードのインストールディレクトリに移動**
     ターミナルを開き、`cd`コマンドであなたの`symbol-shoestring`ノードがインストールされているディレクトリに移動します。
     （`docker-compose.yaml`や`shoestring.ini`がある場所です）
     ```sh
@@ -81,18 +93,6 @@ Automates re-syncing a Symbol (XYM) node by applying the latest blockchain snaps
     ```sh
     git pull
     ```
-
----
-
-## 前提条件 (Prerequisites)
-
--   `git`
--   `docker` 及び `docker-compose`
--   `wget`
--   **`pigz`** (マルチスレッドで動作するgzip解凍並列処理化用)
-    -   Debian/Ubuntu系: `sudo apt-get install pigz`
--   **`pv`** (プログレスバー表示用)
-    -   Debian/Ubuntu系: `sudo apt-get install pv`
 
 ---
 
