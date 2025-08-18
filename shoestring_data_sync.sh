@@ -29,7 +29,7 @@
 # [注意事項]
 # - ノードのブロックチェーンデータはすべて削除されます。
 # - 委任ハーベスティング設定(harvesters.dat)は、存在する場合に自動で
-#   バックアップ・リストアされます。
+#    バックアップ・リストアされます。
 # - 実行ログはスクリプトと同じディレクトリに自動保存されます。
 #
 #================================================================================
@@ -53,6 +53,9 @@ readonly DATA_URL="https://symbol-archive.opening-line.jp/mainnet/mainnet.data.t
 TARGET_DIR=""
 PYTHON_CMD=""
 
+# docker-compose.yaml と shoestring.ini のパスを自動設定するための変数
+TARGET_DOCKER_COMPOSE_PATH=""
+TARGET_SHOESTRING_INI_PATH=""
 
 # --- 関数定義 ---
 
@@ -85,23 +88,41 @@ show_progress() {
         fi
         sleep 1
     done
-    printf "\r[✔] 完了                                \n"
+    printf "\r[✔] 完了                                  \n"
 }
 
 # 操作対象のディレクトリを自動設定し、検証する関数
 initialize_and_validate_paths() {
     log_step "操作対象ディレクトリの確認"
+
     # スクリプトが置かれているディレクトリの、さらに親のディレクトリを取得
-    # これにより、どこからスクリプトを実行しても正しくパスを解決できる
     local script_dir
     script_dir=$(cd "$(dirname "$0")" && pwd)
     TARGET_DIR=$(cd "${script_dir}/.." && pwd)
     
     log_info "親ディレクトリを操作対象として設定します: ${TARGET_DIR}"
 
+    # docker-compose.yaml を自動探索
+    log_info "docker-compose.yaml を ${TARGET_DIR} 以下で探索します..."
+    local found_docker_compose
+    found_docker_compose=$(find "${TARGET_DIR}" -type f -name "docker-compose.yaml" -print -quit)
+    if [ -n "${found_docker_compose}" ]; then
+        TARGET_DOCKER_COMPOSE_PATH="${found_docker_compose}"
+        log_info "見つかりました: ${TARGET_DOCKER_COMPOSE_PATH}"
+    fi
+
+    # shoestring.ini を自動探索
+    log_info "shoestring.ini を ${TARGET_DIR} 以下で探索します..."
+    local found_shoestring_ini
+    found_shoestring_ini=$(find "${TARGET_DIR}" -type f -name "shoestring.ini" -print -quit)
+    if [ -n "${found_shoestring_ini}" ]; then
+        TARGET_SHOESTRING_INI_PATH="${found_shoestring_ini}"
+        log_info "見つかりました: ${TARGET_SHOESTRING_INI_PATH}"
+    fi
+
     # 必須ファイルの存在を確認
-    if ! [ -d "$TARGET_DIR" ] || ! [ -f "$TARGET_DIR/docker-compose.yaml" ] || ! [ -f "$TARGET_DIR/shoestring.ini" ]; then
-        echo "エラー: 親ディレクトリにshoestringの必須ファイル(docker-compose.yaml, shoestring.ini)が見つかりません。"
+    if ! [ -f "${TARGET_DOCKER_COMPOSE_PATH}" ] || ! [ -f "${TARGET_SHOESTRING_INI_PATH}" ]; then
+        echo "エラー: 必須ファイル(docker-compose.yaml または shoestring.ini)が見つかりません。"
         echo "このスクリプトは、symbol-shoestringのインストール先でcloneしたディレクトリ内から実行してください。"
         exit 1
     fi
@@ -119,7 +140,7 @@ initialize_and_validate_paths() {
 # 必須コマンドの存在をチェックする関数
 check_dependencies() {
     log_info "必須コマンドの存在をチェックします..."
-    local dependencies=("docker" "wget" "pigz" "git" "pv")
+    local dependencies=("docker" "wget" "pigz" "git" "pv" "find")
     local missing_deps=0
     for cmd in "${dependencies[@]}"; do
         if ! command -v "${cmd}" &> /dev/null; then
@@ -150,7 +171,7 @@ stop_node() {
     log_step "Symbolノードの停止"
     log_info "docker compose down を実行します..."
     # コマンドの出力を抑制し、ログをクリーンに保つ
-    docker compose -f "${TARGET_DIR}/docker-compose.yaml" down > /dev/null 2>&1
+    docker compose -f "${TARGET_DOCKER_COMPOSE_PATH}" down > /dev/null 2>&1
 }
 
 # 委任者情報をバックアップする関数
@@ -180,7 +201,7 @@ reset_shoestring_data() {
     log_step "symbol-shoestring データの初期化"
     log_info "shoestring reset-data を実行します..."
     # コマンドの出力を抑制
-    "${PYTHON_CMD}" -m shoestring reset-data --config "${TARGET_DIR}/shoestring.ini" --directory "${TARGET_DIR}" > /dev/null 2>&1
+    "${PYTHON_CMD}" -m shoestring reset-data --config "${TARGET_SHOESTRING_INI_PATH}" --directory "${TARGET_DIR}" > /dev/null 2>&1
 }
 
 # ダウンロード用のディレクトリを準備する関数
@@ -265,7 +286,7 @@ start_node() {
     log_step "Symbolノードの起動"
     log_info "docker compose up -d を実行してバックグラウンドでノードを起動します..."
     # コマンドの出力を抑制
-    docker compose -f "${TARGET_DIR}/docker-compose.yaml" up -d > /dev/null 2>&1
+    docker compose -f "${TARGET_DOCKER_COMPOSE_PATH}" up -d > /dev/null 2>&1
 }
 
 # ノードのヘルスチェックを行う関数
@@ -275,7 +296,7 @@ health_check() {
     sleep 60
     log_info "ヘルスチェックを実行します..."
     # コマンドの出力を抑制
-    "${PYTHON_CMD}" -m shoestring health --config "${TARGET_DIR}/shoestring.ini" --directory "${TARGET_DIR}" > /dev/null 2>&1
+    "${PYTHON_CMD}" -m shoestring health --config "${TARGET_SHOESTRING_INI_PATH}" --directory "${TARGET_DIR}" > /dev/null 2>&1
     # 正常終了したことを示すメッセージを追加
     log_info "ヘルスチェックは正常に完了しました。"
 }
@@ -324,4 +345,3 @@ main() {
 
 # スクリプトの実行開始
 main
-
