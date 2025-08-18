@@ -28,6 +28,8 @@ Automates re-syncing a Symbol (XYM) node by applying the latest blockchain snaps
 -   Symbol-shoestring インストールディレクトリにて実行すること。
 -   インストールディレクトリには、 `docker-compose.yaml`  `shoestring.ini` が存在すること。  
     -   直下にファイルが無い場合は、存在する場所を指定してください。
+-   `venv`  Python仮想環境で、環境が作成されていること。
+    -   例 インストールディレクトリにて souce ./bin/venv/bin/python3 が実行できること。
 -   `git`  `docker`  `docker-compose`  `wget` がインストール済み。
 -   **`pigz`** (マルチスレッドで動作するgzip解凍並列処理化用)
     -   Debian/Ubuntu系: `sudo apt-get install pigz`
