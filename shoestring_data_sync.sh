@@ -36,7 +36,7 @@ readonly DUAL_DATA_URL="https://catapultmainnetdata.s3.us-west-2.amazonaws.com/w
 # スクリプトの親ディレクトリを操作対象とする
 TARGET_DIR=""
 PYTHON_CMD=""
-DOCKER_COMPOSE_CMD="docker compose"
+DOCKER_COMPOSE_CMD=""
 
 # docker-compose.yaml と shoestring.ini のパスを自動設定するための変数
 TARGET_DOCKER_COMPOSE_PATH=""
@@ -116,6 +116,15 @@ initialize_and_validate_paths() {
 
 # 必須コマンドの存在をチェックする
 check_dependencies() {
+    log_info "docker-compose or docker compose ?"
+    if docker compose version &> /dev/null; then
+       echo "docker compose コマンドを使用します。"
+       DOCKER_COMPOSE_CMD="docker compose"
+    else
+       echo "docker-compose コマンドを使用します。"
+       DOCKER_COMPOSE_CMD="docker-compose"
+    fi
+	
     log_info "必須コマンドの存在をチェックします..."
     local dependencies=("wget" "pigz" "git" "pv" "find")
     local missing_deps=0
@@ -149,7 +158,7 @@ confirm_execution() {
 stop_node() {
     log_step "Symbolノードの停止"
     log_info "${DOCKER_COMPOSE_CMD} down を実行します..."
-    "${DOCKER_COMPOSE_CMD}" down
+    ${DOCKER_COMPOSE_CMD} down
 }
 
 # 委任者情報をバックアップする
@@ -176,7 +185,7 @@ cleanup_docker_system() {
 reset_shoestring_data() {
     log_step "symbol-shoestring データの初期化"
     log_info "shoestring reset-data を実行します..."
-    "${PYTHON_CMD}" -m shoestring reset-data --config "${TARGET_SHOESTRING_INI_PATH}" --directory "${TARGET_DIR}" > /dev/null 2>&1
+    ${PYTHON_CMD} -m shoestring reset-data --config ${TARGET_SHOESTRING_INI_PATH} --directory ${TARGET_DIR} 
 }
 
 # ダウンロード用のディレクトリを準備する
@@ -184,11 +193,11 @@ prepare_backup_dir() {
     log_step "ダウンロード用ディレクトリの準備"
     if [ -d "${BACKUP_DIR}" ]; then
         log_info "既存の ${BACKUP_DIR} フォルダを削除します。"
-        rm -rf "${BACKUP_DIR}"
+        rm -rf ${BACKUP_DIR}
     fi
     
     log_info "${BACKUP_DIR}フォルダを新規に作成します。"
-    mkdir "${BACKUP_DIR}"
+    mkdir ${BACKUP_DIR}
     log_info "ディレクトリの準備が完了しました。(${BACKUP_DIR})"
 }
 
@@ -242,7 +251,7 @@ restore_harvesters_data() {
 start_node() {
     log_step "Symbolノードの起動"
     log_info "${DOCKER_COMPOSE_CMD} up -d を実行してバックグラウンドでノードを起動します..."
-    "${DOCKER_COMPOSE_CMD}" up -d
+    ${DOCKER_COMPOSE_CMD} up -d
 }
 
 # ノードのヘルスチェックを行う
@@ -251,7 +260,7 @@ health_check() {
     log_info "ノードの起動を安定させるため3分待機します..."
     sleep 180
     log_info "ヘルスチェックを実行します..."
-    "${PYTHON_CMD}" -m shoestring health --config "${TARGET_SHOESTRING_INI_PATH}" --directory "${TARGET_DIR}"
+    ${PYTHON_CMD} -m shoestring health --config ${TARGET_SHOESTRING_INI_PATH} --directory ${TARGET_DIR}
     log_info "ヘルスチェックは正常に完了しました。"
 }
 
