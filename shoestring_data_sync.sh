@@ -250,8 +250,8 @@ restore_harvesters_data() {
 # Symbolノードを起動する
 start_node() {
     log_step "Symbolノードの起動"
-    log_info "${DOCKER_COMPOSE_CMD} up -d を実行してバックグラウンドでノードを起動します..."
-    ${DOCKER_COMPOSE_CMD} up -d
+    log_info "${DOCKER_COMPOSE_CMD} -f ${TARGET_DOCKER_COMPOSE_PATH} up -d を実行してバックグラウンドでノードを起動します..."
+    ${DOCKER_COMPOSE_CMD} -f ${TARGET_DOCKER_COMPOSE_PATH} up -d
 }
 
 # ノードのヘルスチェックを行う
