@@ -9,19 +9,13 @@
 # 最新のスナップショットに置き換えます。
 #
 # [使い方]
-# 以下のいずれかの方法で実行してください。
+# スクリプトを正しく動作させるために、以下の方法で実行してください。
 #
 # 方法1 (推奨):
 # 1. ターミナルで、symbol-shoestringをインストールしたディレクトリに移動します。
 #    例: cd /home/user/my-node
-# 2. そのディレクトリで、このスクリプトを実行します。
-#    例: ./shoestring_data_sync/shoestring_data_sync.sh
-#
-# 方法2:
-# 1. ターミナルで、このスクリプトが置かれているディレクトリに移動します。
-#    例: cd /home/user/my-node/shoestring_data_sync
-# 2. そのディレクトリで、このスクリプトを実行します。
-#    例: ./shoestring_data_sync.sh
+# 2. そのディレクトリで、`source`コマンドを使ってこのスクリプトを実行します。
+#    例: source ./shoestring_data_sync/shoestring_data_sync.sh
 #
 # [注意事項]
 # - ノードのブロックチェーンデータはすべて削除されます。
@@ -250,6 +244,7 @@ move_data_to_node() {
     log_info "ダウンロードしたデータをターゲットディレクトリに移動します..."
     
     shopt -s nullglob
+    # databases/直下のデータを移動するように修正
     mv -f "./${BACKUP_DIR}/databases/"* "${TARGET_DIR}/dbdata/"
     mv -f "./${BACKUP_DIR}/data/"* "${TARGET_DIR}/data/"
     shopt -u nullglob
