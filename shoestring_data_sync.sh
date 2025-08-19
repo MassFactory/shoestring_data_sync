@@ -136,16 +136,18 @@ check_dependencies() {
 
     # docker と docker-compose の互換性をチェック
     if command -v "docker" &> /dev/null; then
-        if command -v "docker compose" &> /dev/null; then
+        if docker compose version &> /dev/null; then
             DOCKER_COMPOSE_CMD="docker compose"
         elif command -v "docker-compose" &> /dev/null; then
             DOCKER_COMPOSE_CMD="docker-compose"
         else
-            echo "ERROR: 'docker compose'または'docker-compose'コマンドが見つかりません。"
+            echo "エラー: Docker composeコマンドが見つかりません。"
+            echo "Docker Engineのバージョンを確認し、'docker compose'または'docker-compose'プラグインがインストールされているか確認してください。"
             missing_deps=$((missing_deps + 1))
         fi
     else
-        echo "ERROR: 'docker'コマンドが見つかりません。"
+        echo "エラー: 'docker'コマンドが見つかりません。"
+        echo "Docker Engineがインストールされているか、PATHが正しく設定されているか確認してください。"
         missing_deps=$((missing_deps + 1))
     fi
 
@@ -248,7 +250,7 @@ move_data_to_node() {
     log_info "ダウンロードしたデータをターゲットディレクトリに移動します..."
     
     shopt -s nullglob
-    mv -f "./${BACKUP_DIR}/databases/db/"* "${TARGET_DIR}/dbdata/"
+    mv -f "./${BACKUP_DIR}/databases/"* "${TARGET_DIR}/dbdata/"
     mv -f "./${BACKUP_DIR}/data/"* "${TARGET_DIR}/data/"
     shopt -u nullglob
 
