@@ -9,7 +9,19 @@
 # 最新のスナップショットに置き換えます。
 #
 # [使い方]
-# スクリプト冒頭のコメント欄を参照してください。
+# 以下のいずれかの方法で実行してください。
+#
+# 方法1 (推奨):
+# 1. ターミナルで、symbol-shoestringをインストールしたディレクトリに移動します。
+#    例: cd /home/user/my-node
+# 2. そのディレクトリで、このスクリプトを実行します。
+#    例: ./shoestring_data_sync/shoestring_data_sync.sh
+#
+# 方法2:
+# 1. ターミナルで、このスクリプトが置かれているディレクトリに移動します。
+#    例: cd /home/user/my-node/shoestring_data_sync
+# 2. そのディレクトリで、このスクリプトを実行します。
+#    例: ./shoestring_data_sync.sh
 #
 # [注意事項]
 # - ノードのブロックチェーンデータはすべて削除されます。
@@ -78,29 +90,34 @@ show_progress() {
 initialize_and_validate_paths() {
     log_step "操作対象ディレクトリの確認"
 
-    # スクリプトが置かれているディレクトリを操作対象として設定
-    TARGET_DIR=$(cd "$(dirname "$0")" && pwd)
+    local script_dir
+    script_dir=$(cd "$(dirname "$0")" && pwd)
 
-    log_info "スクリプト実行ディレクトリを操作対象として設定します: ${TARGET_DIR}"
+    # 最初に、親ディレクトリを試す (推奨される使い方)
+    local potential_target_dir
+    potential_target_dir=$(cd "${script_dir}/.." && pwd)
+    log_info "親ディレクトリを操作対象として検証します: ${potential_target_dir}"
 
-    local found_docker_compose
-    found_docker_compose=$(find "${TARGET_DIR}" -type f -name "docker-compose.yaml" -print -quit)
-    if [ -n "${found_docker_compose}" ]; then
-        TARGET_DOCKER_COMPOSE_PATH="${found_docker_compose}"
-        log_info "docker-compose.yaml が見つかりました: ${TARGET_DOCKER_COMPOSE_PATH}"
+    if [ -f "${potential_target_dir}/docker-compose.yaml" ] && [ -f "${potential_target_dir}/shoestring.ini" ]; then
+        TARGET_DIR="${potential_target_dir}"
+    else
+        # 親ディレクトリに必須ファイルがなければ、スクリプト実行ディレクトリ自体を試す
+        log_info "親ディレクトリに必須ファイルが見つかりませんでした。スクリプト実行ディレクトリを検証します: ${script_dir}"
+        if [ -f "${script_dir}/docker-compose.yaml" ] && [ -f "${script_dir}/shoestring.ini" ]; then
+            TARGET_DIR="${script_dir}"
+        else
+            echo "エラー: 必須ファイル(docker-compose.yaml または shoestring.ini)が見つかりません。"
+            echo "このスクリプトは、symbol-shoestringのインストール先、またはそのサブディレクトリから実行してください。"
+            exit 1
+        fi
     fi
 
-    local found_shoestring_ini
-    found_shoestring_ini=$(find "${TARGET_DIR}" -type f -name "shoestring.ini" -print -quit)
-    if [ -n "${found_shoestring_ini}" ]; then
-        TARGET_SHOESTRING_INI_PATH="${found_shoestring_ini}"
-        log_info "shoestring.ini が見つかりました: ${TARGET_SHOESTRING_INI_PATH}"
-    fi
+    TARGET_DOCKER_COMPOSE_PATH="${TARGET_DIR}/docker-compose.yaml"
+    TARGET_SHOESTRING_INI_PATH="${TARGET_DIR}/shoestring.ini"
 
-    if ! [ -f "${TARGET_DOCKER_COMPOSE_PATH}" ] || ! [ -f "${TARGET_SHOESTRING_INI_PATH}" ]; then
-        echo "エラー: 必須ファイル(docker-compose.yaml または shoestring.ini)が見つかりません。"
-        exit 1
-    fi
+    log_info "操作対象ディレクトリを自動設定しました: ${TARGET_DIR}"
+    log_info "docker-compose.yaml: ${TARGET_DOCKER_COMPOSE_PATH}"
+    log_info "shoestring.ini: ${TARGET_SHOESTRING_INI_PATH}"
 
     PYTHON_CMD="${TARGET_DIR}/venv/bin/python3"
     if [ ! -x "${PYTHON_CMD}" ]; then
@@ -231,8 +248,7 @@ move_data_to_node() {
     log_info "ダウンロードしたデータをターゲットディレクトリに移動します..."
     
     shopt -s nullglob
-    # databases/db/からdatabases/に修正
-    mv -f "./${BACKUP_DIR}/databases/"* "${TARGET_DIR}/dbdata/"
+    mv -f "./${BACKUP_DIR}/databases/db/"* "${TARGET_DIR}/dbdata/"
     mv -f "./${BACKUP_DIR}/data/"* "${TARGET_DIR}/data/"
     shopt -u nullglob
 
