@@ -87,5 +87,5 @@ Automates re-syncing a Symbol (XYM) node by applying the latest blockchain snaps
 
 -   **データの上書き**: このスクリプトを実行すると、ノードのブロックチェーンデータは**完全に削除され**、ダウンロードした新しいデータに置き換えられます。
 -   **自己責任での利用**: 本スクリプトの使用によって生じたいかなる損害についても、作成者は責任を負いません。内容を理解した上で、自己責任でご利用ください。
--   **データ提供元**: ブロックチェーン・スナップショットは[オープニングライン様](https://symbol-archive.opening-line.jp/)のアーカイブを利用させていただいております。オープニングライン様、マジ感謝です。(https://x.com/IncOpening)
+-   **データ提供元**: ブロックチェーン・スナップショットは[公式GitHub](https://github.com/symbol/product/tree/dev/tools/shoestring#need-to-resync-your-node)のアーカイブを利用させていただいております。
 
