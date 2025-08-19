@@ -171,7 +171,7 @@ stop_node() {
     log_step "Symbolノードの停止"
     log_info "docker compose down を実行します..."
     # コマンドの出力を抑制し、ログをクリーンに保つ
-    docker compose -f "${TARGET_DOCKER_COMPOSE_PATH}" down > /dev/null 2>&1
+    docker compose -f "${TARGET_DOCKER_COMPOSE_PATH}" down 
 }
 
 # 委任者情報をバックアップする関数
@@ -286,17 +286,17 @@ start_node() {
     log_step "Symbolノードの起動"
     log_info "docker compose up -d を実行してバックグラウンドでノードを起動します..."
     # コマンドの出力を抑制
-    docker compose -f "${TARGET_DOCKER_COMPOSE_PATH}" up -d > /dev/null 2>&1
+    docker compose -f "${TARGET_DOCKER_COMPOSE_PATH}" up -d
 }
 
 # ノードのヘルスチェックを行う関数
 health_check() {
     log_step "ヘルスチェック"
-    log_info "ノードの起動を安定させるため60秒待機します..."
-    sleep 60
+    log_info "ノードの起動を安定させるため3分待機します..."
+    sleep 180
     log_info "ヘルスチェックを実行します..."
     # コマンドの出力を抑制
-    "${PYTHON_CMD}" -m shoestring health --config "${TARGET_SHOESTRING_INI_PATH}" --directory "${TARGET_DIR}" > /dev/null 2>&1
+    "${PYTHON_CMD}" -m shoestring health --config "${TARGET_SHOESTRING_INI_PATH}" --directory "${TARGET_DIR}"
     # 正常終了したことを示すメッセージを追加
     log_info "ヘルスチェックは正常に完了しました。"
 }
