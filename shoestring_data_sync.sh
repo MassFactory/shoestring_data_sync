@@ -36,7 +36,7 @@ readonly DUAL_DATA_URL="https://catapultmainnetdata.s3.us-west-2.amazonaws.com/w
 # スクリプトの親ディレクトリを操作対象とする
 TARGET_DIR=""
 PYTHON_CMD=""
-DOCKER_COMPOSE_CMD=""
+DOCKER_COMPOSE_CMD="docker compose"
 
 # docker-compose.yaml と shoestring.ini のパスを自動設定するための変数
 TARGET_DOCKER_COMPOSE_PATH=""
@@ -120,21 +120,6 @@ check_dependencies() {
     local dependencies=("wget" "pigz" "git" "pv" "find")
     local missing_deps=0
 
-    # docker と docker-compose の互換性をチェック
-    if command -v "docker" &> /dev/null; then
-        if command -v "docker compose" &> /dev/null; then
-            DOCKER_COMPOSE_CMD="docker compose"
-        elif command -v "docker-compose" &> /dev/null; then
-            DOCKER_COMPOSE_CMD="docker-compose"
-        else
-            echo "ERROR: 'docker compose'または'docker-compose'コマンドが見つかりません。"
-            missing_deps=$((missing_deps + 1))
-        fi
-    else
-        echo "ERROR: 'docker'コマンドが見つかりません。"
-        missing_deps=$((missing_deps + 1))
-    fi
-
     # その他の依存関係をチェック
     for cmd in "${dependencies[@]}"; do
         if ! command -v "${cmd}" &> /dev/null; then
@@ -164,7 +149,7 @@ confirm_execution() {
 stop_node() {
     log_step "Symbolノードの停止"
     log_info "${DOCKER_COMPOSE_CMD} down を実行します..."
-    "${DOCKER_COMPOSE_CMD}" -f "${TARGET_DOCKER_COMPOSE_PATH}" down
+    "${DOCKER_COMPOSE_CMD}" down
 }
 
 # 委任者情報をバックアップする
@@ -257,7 +242,7 @@ restore_harvesters_data() {
 start_node() {
     log_step "Symbolノードの起動"
     log_info "${DOCKER_COMPOSE_CMD} up -d を実行してバックグラウンドでノードを起動します..."
-    "${DOCKER_COMPOSE_CMD}" -f "${TARGET_DOCKER_COMPOSE_PATH}" up -d
+    "${DOCKER_COMPOSE_CMD}" up -d
 }
 
 # ノードのヘルスチェックを行う
