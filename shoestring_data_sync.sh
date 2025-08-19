@@ -9,13 +9,7 @@
 # 最新のスナップショットに置き換えます。
 #
 # [使い方]
-# スクリプトを正しく動作させるために、以下の方法で実行してください。
-#
-# 方法1 (推奨):
-# 1. ターミナルで、symbol-shoestringをインストールしたディレクトリに移動します。
-#    例: cd /home/user/my-node
-# 2. そのディレクトリで、`source`コマンドを使ってこのスクリプトを実行します。
-#    例: source ./shoestring_data_sync/shoestring_data_sync.sh
+# スクリプト冒頭のコメント欄を参照してください。
 #
 # [注意事項]
 # - ノードのブロックチェーンデータはすべて削除されます。
@@ -39,10 +33,12 @@ readonly BACKUP_DIR="back_data"
 readonly DUAL_DATA_URL="https://catapultmainnetdata.s3.us-west-2.amazonaws.com/weekly/catapult_dual_data.tar.gz"
 
 # --- グローバル変数 ---
+# スクリプトの親ディレクトリを操作対象とする
 TARGET_DIR=""
 PYTHON_CMD=""
 DOCKER_COMPOSE_CMD=""
 
+# docker-compose.yaml と shoestring.ini のパスを自動設定するための変数
 TARGET_DOCKER_COMPOSE_PATH=""
 TARGET_SHOESTRING_INI_PATH=""
 
@@ -86,32 +82,28 @@ initialize_and_validate_paths() {
 
     local script_dir
     script_dir=$(cd "$(dirname "$0")" && pwd)
+    TARGET_DIR=$(cd "${script_dir}/.." && pwd)
 
-    # 最初に、親ディレクトリを試す (推奨される使い方)
-    local potential_target_dir
-    potential_target_dir=$(cd "${script_dir}/.." && pwd)
-    log_info "親ディレクトリを操作対象として検証します: ${potential_target_dir}"
+    log_info "親ディレクトリを操作対象として設定します: ${TARGET_DIR}"
 
-    if [ -f "${potential_target_dir}/docker-compose.yaml" ] && [ -f "${potential_target_dir}/shoestring.ini" ]; then
-        TARGET_DIR="${potential_target_dir}"
-    else
-        # 親ディレクトリに必須ファイルがなければ、スクリプト実行ディレクトリ自体を試す
-        log_info "親ディレクトリに必須ファイルが見つかりませんでした。スクリプト実行ディレクトリを検証します: ${script_dir}"
-        if [ -f "${script_dir}/docker-compose.yaml" ] && [ -f "${script_dir}/shoestring.ini" ]; then
-            TARGET_DIR="${script_dir}"
-        else
-            echo "エラー: 必須ファイル(docker-compose.yaml または shoestring.ini)が見つかりません。"
-            echo "このスクリプトは、symbol-shoestringのインストール先、またはそのサブディレクトリから実行してください。"
-            exit 1
-        fi
+    local found_docker_compose
+    found_docker_compose=$(find "${TARGET_DIR}" -type f -name "docker-compose.yaml" -print -quit)
+    if [ -n "${found_docker_compose}" ]; then
+        TARGET_DOCKER_COMPOSE_PATH="${found_docker_compose}"
+        log_info "docker-compose.yaml が見つかりました: ${TARGET_DOCKER_COMPOSE_PATH}"
     fi
 
-    TARGET_DOCKER_COMPOSE_PATH="${TARGET_DIR}/docker-compose.yaml"
-    TARGET_SHOESTRING_INI_PATH="${TARGET_DIR}/shoestring.ini"
+    local found_shoestring_ini
+    found_shoestring_ini=$(find "${TARGET_DIR}" -type f -name "shoestring.ini" -print -quit)
+    if [ -n "${found_shoestring_ini}" ]; then
+        TARGET_SHOESTRING_INI_PATH="${found_shoestring_ini}"
+        log_info "shoestring.ini が見つかりました: ${TARGET_SHOESTRING_INI_PATH}"
+    fi
 
-    log_info "操作対象ディレクトリを自動設定しました: ${TARGET_DIR}"
-    log_info "docker-compose.yaml: ${TARGET_DOCKER_COMPOSE_PATH}"
-    log_info "shoestring.ini: ${TARGET_SHOESTRING_INI_PATH}"
+    if ! [ -f "${TARGET_DOCKER_COMPOSE_PATH}" ] || ! [ -f "${TARGET_SHOESTRING_INI_PATH}" ]; then
+        echo "エラー: 必須ファイル(docker-compose.yaml または shoestring.ini)が見つかりません。"
+        exit 1
+    fi
 
     PYTHON_CMD="${TARGET_DIR}/venv/bin/python3"
     if [ ! -x "${PYTHON_CMD}" ]; then
@@ -125,27 +117,25 @@ initialize_and_validate_paths() {
 # 必須コマンドの存在をチェックする
 check_dependencies() {
     log_info "必須コマンドの存在をチェックします..."
+    local dependencies=("wget" "pigz" "git" "pv" "find")
     local missing_deps=0
 
     # docker と docker-compose の互換性をチェック
     if command -v "docker" &> /dev/null; then
-        if docker compose version &> /dev/null; then
+        if command -v "docker compose" &> /dev/null; then
             DOCKER_COMPOSE_CMD="docker compose"
         elif command -v "docker-compose" &> /dev/null; then
             DOCKER_COMPOSE_CMD="docker-compose"
         else
-            echo "エラー: Docker composeコマンドが見つかりません。"
-            echo "Docker Engineのバージョンを確認し、'docker compose'または'docker-compose'プラグインがインストールされているか確認してください。"
+            echo "ERROR: 'docker compose'または'docker-compose'コマンドが見つかりません。"
             missing_deps=$((missing_deps + 1))
         fi
     else
-        echo "エラー: 'docker'コマンドが見つかりません。"
-        echo "Docker Engineがインストールされているか、PATHが正しく設定されているか確認してください。"
+        echo "ERROR: 'docker'コマンドが見つかりません。"
         missing_deps=$((missing_deps + 1))
     fi
 
     # その他の依存関係をチェック
-    local dependencies=("wget" "pigz" "git" "pv" "find")
     for cmd in "${dependencies[@]}"; do
         if ! command -v "${cmd}" &> /dev/null; then
             echo "ERROR: 必須コマンドが見つかりません: ${cmd}"
@@ -244,8 +234,7 @@ move_data_to_node() {
     log_info "ダウンロードしたデータをターゲットディレクトリに移動します..."
     
     shopt -s nullglob
-    # databases/直下のデータを移動するように修正
-    mv -f "./${BACKUP_DIR}/databases/"* "${TARGET_DIR}/dbdata/"
+    mv -f "./${BACKUP_DIR}/databases/db/"* "${TARGET_DIR}/dbdata/"
     mv -f "./${BACKUP_DIR}/data/"* "${TARGET_DIR}/data/"
     shopt -u nullglob
 
@@ -288,14 +277,6 @@ main() {
     start_time=$(date +%s)
 
     initialize_and_validate_paths
-    
-    # Python仮想環境の自動有効化
-    local venv_dir="${TARGET_DIR}/venv"
-    if [ -d "${venv_dir}" ]; then
-        log_info "Python仮想環境 (${venv_dir}) を自動的に有効化します。"
-        source "${venv_dir}/bin/activate"
-    fi
-
     check_dependencies
     confirm_execution
 
