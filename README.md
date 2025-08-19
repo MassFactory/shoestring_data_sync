@@ -26,8 +26,8 @@ Automates re-syncing a Symbol (XYM) node by applying the latest blockchain snaps
 ## 前提条件 (Prerequisites)
 
 -   Symbol-shoestring インストールディレクトリにて実行すること。
--   インストールディレクトリには、 `docker-compose.yaml`  `shoestring.ini` が存在すること。  
-    -   直下にファイルが無い場合は、存在する場所を指定してください。
+-   インストールディレクトリ以下には、 `docker-compose.yaml`  `shoestring.ini` が存在すること。  
+    -   ファイル検索にて、自動的に場所を特定します。
 -   `venv`  Python仮想環境で、環境が作成されていること。
     -   例 インストールディレクトリにて souce ./bin/venv/bin/python3 が実行できること。
 -   `git`  `docker`  `docker-compose`  `wget` がインストール済み。
@@ -44,7 +44,7 @@ Automates re-syncing a Symbol (XYM) node by applying the latest blockchain snaps
 
 1.  **ノードのインストールディレクトリに移動**
     ターミナルを開き、`cd`コマンドであなたの`symbol-shoestring`ノードがインストールされているディレクトリに移動します。
-    （`docker-compose.yaml`や`shoestring.ini`がある場所です ）
+    
     ```sh
     # 例
     cd /home/user/my-symbol-node
@@ -103,5 +103,5 @@ Automates re-syncing a Symbol (XYM) node by applying the latest blockchain snaps
 
 -   **データの上書き**: このスクリプトを実行すると、ノードのブロックチェーンデータは**完全に削除され**、ダウンロードした新しいデータに置き換えられます。
 -   **自己責任での利用**: 本スクリプトの使用によって生じたいかなる損害についても、作成者は責任を負いません。内容を理解した上で、自己責任でご利用ください。
--   **データ提供元**: ブロックチェーン・スナップショットは[オープニングライン様](https://symbol-archive.opening-line.jp/)のアーカイブを利用させていただいております。オープニングライン様、マジ感謝です。
+-   **データ提供元**: ブロックチェーン・スナップショットは[オープニングライン様](https://symbol-archive.opening-line.jp/)のアーカイブを利用させていただいております。オープニングライン様、マジ感謝です。(https://x.com/IncOpening)
 
