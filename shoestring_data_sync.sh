@@ -131,7 +131,6 @@ initialize_and_validate_paths() {
 # 必須コマンドの存在をチェックする
 check_dependencies() {
     log_info "必須コマンドの存在をチェックします..."
-    local dependencies=("wget" "pigz" "git" "pv" "find")
     local missing_deps=0
 
     # docker と docker-compose の互換性をチェック
@@ -152,6 +151,7 @@ check_dependencies() {
     fi
 
     # その他の依存関係をチェック
+    local dependencies=("wget" "pigz" "git" "pv" "find")
     for cmd in "${dependencies[@]}"; do
         if ! command -v "${cmd}" &> /dev/null; then
             echo "ERROR: 必須コマンドが見つかりません: ${cmd}"
@@ -293,6 +293,14 @@ main() {
     start_time=$(date +%s)
 
     initialize_and_validate_paths
+    
+    # Python仮想環境の自動有効化
+    local venv_dir="${TARGET_DIR}/venv"
+    if [ -d "${venv_dir}" ]; then
+        log_info "Python仮想環境 (${venv_dir}) を自動的に有効化します。"
+        source "${venv_dir}/bin/activate"
+    fi
+
     check_dependencies
     confirm_execution
 
