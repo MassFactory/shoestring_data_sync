@@ -33,12 +33,10 @@ readonly BACKUP_DIR="back_data"
 readonly DUAL_DATA_URL="https://catapultmainnetdata.s3.us-west-2.amazonaws.com/weekly/catapult_dual_data.tar.gz"
 
 # --- グローバル変数 ---
-# スクリプトの親ディレクトリを操作対象とする
 TARGET_DIR=""
 PYTHON_CMD=""
 DOCKER_COMPOSE_CMD=""
 
-# docker-compose.yaml と shoestring.ini のパスを自動設定するための変数
 TARGET_DOCKER_COMPOSE_PATH=""
 TARGET_SHOESTRING_INI_PATH=""
 
@@ -80,11 +78,10 @@ show_progress() {
 initialize_and_validate_paths() {
     log_step "操作対象ディレクトリの確認"
 
-    local script_dir
-    script_dir=$(cd "$(dirname "$0")" && pwd)
-    TARGET_DIR=$(cd "${script_dir}/.." && pwd)
+    # スクリプトが置かれているディレクトリを操作対象として設定
+    TARGET_DIR=$(cd "$(dirname "$0")" && pwd)
 
-    log_info "親ディレクトリを操作対象として設定します: ${TARGET_DIR}"
+    log_info "スクリプト実行ディレクトリを操作対象として設定します: ${TARGET_DIR}"
 
     local found_docker_compose
     found_docker_compose=$(find "${TARGET_DIR}" -type f -name "docker-compose.yaml" -print -quit)
@@ -234,6 +231,7 @@ move_data_to_node() {
     log_info "ダウンロードしたデータをターゲットディレクトリに移動します..."
     
     shopt -s nullglob
+    # databases/db/からdatabases/に修正
     mv -f "./${BACKUP_DIR}/databases/"* "${TARGET_DIR}/dbdata/"
     mv -f "./${BACKUP_DIR}/data/"* "${TARGET_DIR}/data/"
     shopt -u nullglob
