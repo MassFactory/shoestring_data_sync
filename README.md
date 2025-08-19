@@ -82,22 +82,6 @@ Automates re-syncing a Symbol (XYM) node by applying the latest blockchain snaps
 
 ---
 
-## スクリプトのアップデート方法
-
-スクリプトに新しいバージョンが公開された場合は、以下の手順でアップデートしてください。フォルダを削除する必要はありません。
-
-1.  **スクリプトのディレクトリに移動**
-    ```sh
-    cd /path/to/your/node/shoestring_data_sync
-    ```
-
-2.  **変更内容を取得**
-    `git pull`コマンドを実行すると、スクリプトが最新の状態に更新されます。ダウンロード途中のデータは保持されます。
-    ```sh
-    git pull
-    ```
-
----
 
 ## 注意事項 (Important Notes)
 
