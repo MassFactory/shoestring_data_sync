@@ -3,7 +3,7 @@ Automates re-syncing a Symbol (XYM) node by applying the latest blockchain snaps
 
 ---
 
-# Symbol-shoestring ノード データ自動同期スクリプト
+# Symbol-Shoestring ノード データ自動同期スクリプト
 
 ## 概要 (Overview)
 
