@@ -1,5 +1,7 @@
 # shoestring_data_sync
-Automates re-syncing a Symbol (XYM) node by applying the latest blockchain snapshot. This script handles the entire process: safe shutdown, harvesters.dat backup, Docker cleanup, data replacement, and restart. It also auto-creates detailed, timestamped logs for easy troubleshooting. Ideal for symbol-shoestring users.
+This script is designed to download and replace the blockchain data for Symbol (XYM) nodes built with symbol-shoestring using the latest snapshots. It eliminates tedious manual tasks and enables rapid data synchronization. It is ideal for resyncing after a database crash or for the initial data sync after setup.
+
+All execution processes are automatically saved as timestamped log files.
 
 ---
 
