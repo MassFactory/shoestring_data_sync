@@ -210,7 +210,7 @@ download_and_extract_data() {
     local data_filename="catapult_dual_data.tar.gz"
     local data_filepath="./${BACKUP_DIR}/${data_filename}"
 
-    log_info "[1/2] ブロックデータをダウンロードしています... (ファイルサイズ: 約80GB)"
+    log_info "[1/2] ブロックデータをダウンロードしています... (ファイルサイズ: 約95GB)"
     (wget -c -q -P "./${BACKUP_DIR}" "${DUAL_DATA_URL}") &
     show_progress $! "${data_filepath}"
 

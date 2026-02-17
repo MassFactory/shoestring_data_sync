@@ -3,7 +3,7 @@ Automates re-syncing a Symbol (XYM) node by applying the latest blockchain snaps
 
 ---
 
-# Symbol-shoestring ノード データ自動同期スクリプト
+# Symbol-Shoestring ノード データ自動同期スクリプト
 
 ## 概要 (Overview)
 
@@ -32,9 +32,9 @@ Automates re-syncing a Symbol (XYM) node by applying the latest blockchain snaps
     -   例 インストールディレクトリにて souce ./bin/venv/bin/python3 が実行できること。
 -   `git`  `docker`  `docker-compose`  `wget` がインストール済み。
 -   **`pigz`** (マルチスレッドで動作するgzip解凍並列処理化用)
-    -   Debian/Ubuntu系: `sudo apt-get install pigz`
+    -   Debian/Ubuntu系: `sudo apt install pigz`
 -   **`pv`** (プログレスバー表示用)
-    -   Debian/Ubuntu系: `sudo apt-get install pv`
+    -   Debian/Ubuntu系: `sudo apt install pv`
 
 ---
 
