@@ -91,3 +91,15 @@ All execution processes are automatically saved as timestamped log files.
 -   **自己責任での利用**: 本スクリプトの使用によって生じたいかなる損害についても、作成者は責任を負いません。内容を理解した上で、自己責任でご利用ください。
 -   **データ提供元**: ブロックチェーン・スナップショットは[公式GitHub](https://github.com/symbol/product/tree/dev/tools/shoestring#need-to-resync-your-node)のアーカイブを利用させていただいております。
 
+---
+
+## Disclaimer / 免責事項
+
+- This software is provided "as is" and without warranty of any kind.
+- The author does not guarantee the accuracy or completeness of the results obtained.
+- The author assumes no responsibility for any damages or disadvantages arising from the use of this software. Use at your own risk.
+
+- 本ソフトウェアは「現状有姿」で提供され、いかなる保証もありません。
+- 作者は、得られた結果の正確性や完全性を保証しません。
+- 本ソフトウェアの使用によって生じた損害や不利益について、作者は一切の責任を負いません。利用者の責任において使用してください。
+
